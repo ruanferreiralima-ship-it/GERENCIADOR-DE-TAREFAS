@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Tarefas - Gerenciador Diário</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(17, 17, 17, 0.3);
+        }
+        
+        .task-item {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col justify-between antialiased selection:bg-sky-500 selection:text-white">
+
+    <!-- Header Section -->
+    <header class="w-full bg-white border-b border-slate-200/80 sticky top-0 z-10 backdrop-blur-md bg-white/80">
+        <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20">
+                    <i class="fa-solid fa-check-double text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 tracking-tight">Minhas Tarefas</h1>
+                    <p class="text-xs text-slate-500 font-medium" id="current-date">Carregando data...</p>
+                </div>
+            </div>
+            
+            <div class="hidden sm:flex items-center bg-slate-100 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600">
+                <span id="header-counter">0 tarefas pendentes</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-3xl w-full mx-auto px-4 py-8">
+        
+        <!-- Task Input Card -->
+        <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200/80 mb-6 transition-shadow hover:shadow-md">
+            <form id="task-form" class="flex flex-col sm:flex-row gap-3" novalidate>
+                <div class="relative flex-grow">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <i class="fa-regular fa-circle-plus text-lg"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="task-input"
+                        placeholder="O que você precisa fazer hoje?" 
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition-all text-sm sm:text-base"
+                        autocomplete="off"
+                    />
+                </div>
+                <button 
+                    type="submit" 
+                    id="btn-adicionar"
+                    class="bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-medium px-6 py-3 rounded-xl transition-colors duration-200 shadow-sm shadow-sky-600/30 flex items-center justify-center gap-2 text-sm sm:text-base shrink-0"
+                >
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Adicionar</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Controls: Filters & Stats -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div class="flex p-1 bg-slate-200/70 rounded-xl text-xs font-medium self-start sm:self-auto">
+                <button id="filter-all" onclick="setFilter('all')" class="filter-btn px-3 py-1.5 rounded-lg text-slate-700 bg-white shadow-sm font-semibold transition-all">
+                    Todas (<span id="count-all">0</span>)
+                </button>
+                <button id="filter-pending" onclick="setFilter('pending')" class="filter-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+                    Pendentes (<span id="count-pending">0</span>)
+                </button>
+                <button id="filter-completed" onclick="setFilter('completed')" class="filter-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+                    Concluídas (<span id="count-completed">0</span>)
+                </button>
+            </div>
+
+            <button 
+                id="clear-completed-btn" 
+                onclick="clearCompleted()" 
+                class="text-xs text-slate-500 hover:text-rose-600 font-medium transition-colors hidden sm:flex items-center gap-1.5 self-end sm:self-auto"
+            >
+                <i class="fa-regular fa-trash-can"></i>
+                <span>Limpar concluídas</span>
+            </button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="bg-slate-200 rounded-full h-1.5 mb-6 overflow-hidden">
+            <div id="progress-bar" class="bg-gradient-to-r from-sky-500 to-indigo-500 h-full w-0 transition-all duration-300"></div>
+        </div>
+
+        <!-- Tasks List Container -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+            <ul id="task-list" class="divide-y divide-slate-100 min-h-[160px] max-h-[500px] overflow-y-auto">
+                <!-- Itens gerados via JS -->
+            </ul>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="py-12 px-4 text-center hidden">
+                <div class="w-16 h-16 bg-sky-50 text-sky-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fa-regular fa-clipboard text-2xl"></i>
+                </div>
+                <h3 class="text-slate-800 font-semibold mb-1">Nenhuma tarefa encontrada</h3>
+                <p class="text-xs text-slate-500 max-w-xs mx-auto">Adicione uma nova tarefa acima para começar a organizar o seu dia!</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-6 text-xs text-slate-400 border-t border-slate-200/60 mt-8">
+        <p>Gerenciador de Tarefas • Organização e Produtividade Diária</p>
+    </footer>
+
+    <!-- Welcome Modal Overlay -->
+    <div id="welcome-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-fade-in relative">
+            <button 
+                onclick="closeModal()" 
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors"
+                aria-label="Fechar"
+            >
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="text-center pt-2">
+                <div class="w-14 h-14 bg-sky-100 text-sky-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+                    <i class="fa-solid fa-hand-wave text-2xl"></i>
+                </div>
+                
+                <h2 class="text-xl font-bold text-slate-900 mb-2">Seja bem-vindo(a)!</h2>
+                
+                <p class="text-sm text-slate-600 mb-6 leading-relaxed">
+                    Estamos felizes em ter você aqui! Organize suas metas e tarefas do dia a dia de forma rápida, simples e eficiente.
+                </p>
+
+                <div class="bg-slate-50 rounded-xl p-3 text-left mb-6 border border-slate-100 flex items-start gap-3">
+                    <i class="fa-solid fa-lightbulb text-amber-500 text-base mt-0.5 shrink-0"></i>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        <strong class="text-slate-700">Dica:</strong> Suas tarefas são salvas automaticamente no navegador para você não perder nada ao recarregar a página!
+                    </p>
+                </div>
+
+                <button 
+                    onclick="closeModal()" 
+                    class="w-full bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white font-medium py-3 rounded-xl transition-all shadow-md shadow-sky-600/20 text-sm"
+                >
+                    Começar agora
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Importação do arquivo JavaScript externo -->
+    <script src="script.js"></script>
+</body>
+</html>
